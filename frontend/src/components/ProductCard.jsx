@@ -1,0 +1,37 @@
+import { Link } from "react-router-dom";
+
+const ProductCard = ({ product }) => {
+    return (
+        <Link to={`/product/${product._id}`} className="group block h-full">
+            <div className="bg-box rounded-xl overflow-hidden border-2 border-box-secondary h-full flex flex-col">
+                <div className="relative aspect-square overflow-hidden bg-box group">
+                    <img src={product.images[0]} alt={product.title} className="absolute top-0 left-0 w-full h-full transition-transform duration-300" />
+                    <img src={product.images[1]} alt={product.title} className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-100 scale-110 group-hover:scale-100 transition-all duration-500" />
+                    {product.discount > 0 && (
+                        <div className="absolute top-2 left-2 bg-primary text-white text-base px-3 py-1 rounded-full">
+                            {product.discount}% OFF
+                        </div>
+                    )}
+                </div>
+                <div className="p-4 flex flex-col grow">
+                    <div className="flex justify-between">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{product.category}</p>
+                        { product.inStock ? <span className="text-green-500">Abailable</span> : <span className="text-red-500">Not Abailable</span> }
+                    </div>
+                    <h3 className="font-semibold text-2xl text-gray-900 dark:text-white truncate mb-2" title={product.title}>{product.title}</h3>
+                    <div className="flex items-center justify-between w-full">
+                        <p className="mt-auto flex items-center gap-2">
+                            <span className="font-extrabold text-xl">${product.finalPrice ? product.finalPrice.toFixed(2) : product.price}</span>
+                            {product.discount > 0 && (
+                                <span className="text-xl text-gray-400 line-through">${product.price}</span>
+                            )}
+                        </p>
+                        <p className="text-2xl">{product.sold} <span className="text-gray-400">sold</span></p>
+                    </div>
+                </div>
+            </div>
+        </Link>
+    );
+};
+
+export default ProductCard;
