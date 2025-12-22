@@ -36,10 +36,8 @@ app.use("/api/v1/orders", orderRoutes)
 app.use("/api/v1/payment", paymentRoutes)
 
 // server start
-if (process.env.NODE_ENV !== "production") {
-  app.listen(process.env.PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${process.env.PORT} from ${new Date().toLocaleDateString("en-GB")} at ${new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })} as ${process.env.NODE_ENV} mode`)
-  })
-}
+app.listen(process.env.PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${process.env.PORT} from ${new Date().toLocaleDateString("en-GB")} at ${new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })} as ${process.env.NODE_ENV} mode`)
+})
 
 export default app
