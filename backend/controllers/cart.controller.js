@@ -1,159 +1,127 @@
 import Cart from "../models/cart.model.js"
 import Product from "../models/product.model.js"
 
-// Get user's cart
-export const getCart = async (req, res) => {
-  try {
-    const cart = await Cart.findOne({ user: req.user.id }).populate(
-      "items.product"
-    )
-
-    if (!cart) {
-      return res.status(200).json({ items: [], total: 0 })
-    }
-
-    res.status(200).json(cart)
-  } catch (error) {
-    console.error("Error fetching cart:", error)
-    res.status(500).json({ message: "Error fetching cart." })
-  }
-}
-
 // Add item to cart
 export const addToCart = async (req, res) => {
   const { productId, quantity, color } = req.body
-  const userId = req.user.id
 
   try {
+    const userId = req.user._id
     const product = await Product.findById(productId)
     if (!product) {
-      return res.status(404).json({ message: "Product not found." })
-    }
-
-    // Validate that the selected color is available for the product
-    if (!product.color.includes(color)) {
-      return res.status(400).json({ message: `Color '${color}' is not available for this product.` })
+      return res.status(404).json({ message: "Product not found" })
     }
 
     let cart = await Cart.findOne({ user: userId })
 
-    if (!cart) {
-      cart = new Cart({ user: userId, items: [] })
-    }
+    if (cart) {
+      // cart exists for user
+      const itemIndex = cart.items.findIndex((p) => p.product.toString() === productId && p.color === color)
 
-    const itemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === productId && item.color === color
-    )
-
-    if (itemIndex > -1) {
-      // Product exists in cart, update quantity
-      cart.items[itemIndex].quantity += Number(quantity)
+      if (itemIndex > -1) {
+        // product exists in the cart, update the quantity
+        let productItem = cart.items[itemIndex]
+        productItem.quantity += Number(quantity)
+        cart.items[itemIndex] = productItem
+      } else {
+        // product does not exist in cart, add new item
+        cart.items.push({ product: productId, quantity: Number(quantity), color })
+      }
+      cart = await cart.save()
+      await cart.populate("items.product")
+      return res.status(200).json(cart)
     } else {
-      // Product does not exist in cart, add new item
-      cart.items.push({ product: productId, quantity, color })
+      // no cart for user, create new cart
+      const newCart = await Cart.create({
+        user: userId,
+        items: [{ product: productId, quantity, color }],
+      })
+      await newCart.populate("items.product")
+      return res.status(201).json(newCart)
     }
-
-    await cart.save()
-    await cart.populate("items.product")
-    res.status(200).json({ message: "Item added to cart.", cart })
-  } catch (error) {
-    console.error("Error adding to cart:", error)
-    res.status(500).json({ message: "Error adding item to cart." })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: err.message })
   }
 }
 
-// Update item quantity in cart
-export const updateCartItem = async (req, res) => {
-  const { productId } = req.params
-  const { quantity, color } = req.body // Expect color in the body
-  const userId = req.user.id
-
-  if (quantity <= 0) {
-    return res.status(400).json({ message: "Quantity must be positive." })
+// Get user cart
+export const getCart = async (req, res) => {
+  try {
+    const userId = req.user._id
+    let cart = await Cart.findOne({ user: userId }).populate("items.product")
+    if (!cart) {
+      return res.status(200).json({ items: [] })
+    }
+    res.status(200).json(cart)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: err.message })
   }
+}
+
+// Update cart item quantity
+export const updateCartItem = async (req, res) => {
+  const { productId, quantity, color } = req.body
 
   try {
-    const cart = await Cart.findOne({ user: userId })
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found." })
-    }
+    const userId = req.user._id
+    let cart = await Cart.findOne({ user: userId })
+    if (!cart) return res.status(404).json({ message: "Cart not found" })
 
-    // Find item by both product ID and color
-    const itemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === productId && item.color === color
-    )
+    const itemIndex = cart.items.findIndex((p) => p.product.toString() === productId && p.color === color)
 
     if (itemIndex > -1) {
-      cart.items[itemIndex].quantity = Number(quantity)
-      await cart.save()
+      if (quantity > 0) {
+        cart.items[itemIndex].quantity = Number(quantity)
+      } else {
+        // if quantity is 0 or less, remove the item
+        cart.items.splice(itemIndex, 1)
+      }
+      cart = await cart.save()
       await cart.populate("items.product")
-      res.status(200).json({ message: "Cart updated.", cart })
+      return res.status(200).json(cart)
     } else {
-      res.status(404).json({ message: "Item not found in cart." })
+      return res.status(404).json({ message: "Item not found in cart" })
     }
-  } catch (error) {
-    console.error("Error updating cart:", error)
-    res.status(500).json({ message: "Error updating cart item." })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: err.message })
   }
 }
 
 // Remove item from cart
-export const removeFromCart = async (req, res) => {
-  const { productId, color } = req.body
-  const userId = req.user.id
+export const removeCartItem = async (req, res) => {
+  const { itemId } = req.params
 
   try {
-    const cart = await Cart.findOneAndUpdate(
-      { user: userId },
-      { $pull: { items: { product: productId, color } } },
-      { new: true }
-    ).populate("items.product")
+    const userId = req.user._id
+    let cart = await Cart.findOne({ user: userId })
+    if (!cart) return res.status(404).json({ message: "Cart not found" })
 
-    if (!cart) {
-      return res.status(404).json({ message: "Cart not found." })
-    }
+    cart.items = cart.items.filter((item) => item._id.toString() !== itemId)
 
-    res.status(200).json({
-      message: "Item removed from cart.",
-      cart,
-    })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: "Error removing item from cart." })
+    cart = await cart.save()
+    await cart.populate("items.product")
+    res.status(200).json(cart)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: err.message })
   }
 }
 
-// Cart summary (items count + total price)
-export const getCartSummary = async (req, res) => {
+// Clear cart
+export const clearCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user.id })
-      .populate("items.product")
-
-    if (!cart || cart.items.length === 0) {
-      return res.status(200).json({
-        totalItems: 0,
-        totalPrice: 0,
-      })
+    const userId = req.user._id
+    const cart = await Cart.findOne({ user: userId })
+    if (cart) {
+      cart.items = []
+      await cart.save()
     }
-
-    let totalItems = 0
-    let totalPrice = 0
-
-    cart.items.forEach((item) => {
-      totalItems += item.quantity
-
-      const price =
-        item.product.finalPrice ?? item.product.price ?? 0
-
-      totalPrice += price * item.quantity
-    })
-
-    res.status(200).json({
-      totalItems,
-      totalPrice,
-    })
-  } catch (error) {
-    console.error("Cart summary error:", error)
-    res.status(500).json({ message: "Failed to get cart summary." })
+    res.status(200).json({ message: "Cart cleared" })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: err.message })
   }
 }

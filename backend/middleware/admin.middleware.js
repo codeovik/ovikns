@@ -1,20 +1,20 @@
-import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken"
 
 export const protectAdmin = (req, res, next) => {
-  const token = req.cookies.admin_token;
+  const token = req.cookies.admin_token
 
   if (!token) {
-    return res.status(401).json({ message: "Admin is not authorized" });
+    return res.status(401).json({ message: "Admin is not authorized" })
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET)
     if (decoded.admin) {
-      next();
+      next()
     } else {
-      throw new Error("Token decode failed");
+      throw new Error("Token decode failed")
     }
   } catch (error) {
-    res.status(401).json({ message: "Not authorized, token failed" });
+    res.status(401).json({ message: "Not authorized, token failed" })
   }
-};
+}
