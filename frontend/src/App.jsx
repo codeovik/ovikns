@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Signin from "@/pages/Signin";
 import Signup from "@/pages/Signup";
-import Dashboard from "@/pages/Dashboard";
 import Settings from "@/pages/Settings";
 import { useAppContext } from "@/context/AppContext";
 import Navbar from "@/components/Navbar";
@@ -56,9 +55,8 @@ export default function App() {
           <Route path="/:id" element={<RedirectLink />} />
 
           {/* auth protected routes */}
-          <Route path="/signin" element={!isAuth ? <Signin /> : <Navigate to="/dashboard" />} />
-          <Route path="/signup" element={!isAuth ? <Signup /> : <Navigate to="/dashboard" />} />
-          <Route path="/dashboard" element={isAuth ? <Dashboard /> : <Navigate to="/signin" />} />
+          <Route path="/signin" element={!isAuth ? <Signin /> : <Navigate to="/" />} />
+          <Route path="/signup" element={!isAuth ? <Signup /> : <Navigate to="/" />} />
           <Route path="/settings" element={isAuth ? <Settings /> : <Navigate to="/signin" />} />
           <Route path="/cart" element={isAuth ? <Cart /> : <Navigate to="/signin" />} />
           <Route path="/orders" element={isAuth ? <Orders /> : <Navigate to="/signin" />} />

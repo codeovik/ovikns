@@ -19,7 +19,7 @@ connectDB()
 const app = express()
 
 // middleware
-app.use("/api/v1/webhook", stripeWebhookRouter) // Stripe Webhook must be defined before express.json() to receive raw body
+app.use("/api/v1/webhook", express.raw({ type: "application/json" }), stripeWebhookRouter) // Stripe Webhook must be defined before express.json() to receive raw body
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({

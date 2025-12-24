@@ -61,7 +61,7 @@ export const googleCallback = async (req, res) => {
     })
 
     // redirect
-    res.redirect(`${process.env.FRONT_END_DOMAIN}/dashboard`)
+    res.redirect(`${process.env.FRONT_END_DOMAIN}/cart`)
 
     // test api in dev mode
     process.env.NODE_ENV === "development" ? console.log(`User ${user.email} logged in with Google`) : null
