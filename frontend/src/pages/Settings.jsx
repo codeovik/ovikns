@@ -5,7 +5,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button"
 
 const Settings = () => {
-    const { signout, deleteAccount } = useAppContext();;
+    const { signout, deleteAccount } = useAppContext();
 
     return (
         <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 text-black dark:text-white">
@@ -59,9 +59,7 @@ const Settings = () => {
                 <section className="border-t-4 border-red-500 rounded-lg bg-red-50 dark:bg-gray-800/20 p-6 shadow-md">
                     <h2 className="text-xl font-bold text-red-600 dark:text-red-500">Danger Zone</h2>
                     <p className="text-gray-600 dark:text-gray-400 mt-2 mb-4">These actions are permanent and cannot be undone.</p>
-                    {/* <Button onClick={handleDeleteAccount} variant="destructive">
-                        <FiTrash2 /> Destructive
-                    </Button> */}
+
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive">
@@ -77,7 +75,7 @@ const Settings = () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={deleteAccount}>Sign Out</AlertDialogAction>
+                                <AlertDialogAction onClick={deleteAccount}>Cinfirm Delete</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>

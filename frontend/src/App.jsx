@@ -20,11 +20,16 @@ import ManageProducts from "@/pages/admin/ManageProducts";
 import ManageOrders from "@/pages/admin/ManageOrders";
 import ManageUsers from "@/pages/admin/ManageUsers";
 import EditProduct from "@/pages/admin/EditProduct";
+import AdminCart from "@/pages/admin/AdminCart";
 import Footer from "@/components/Footer";
 import RedirectLink from "@/pages/RedirectLink";
 import Loading from "@/components/Loading";
+import Cart from "@/pages/Cart";
+import Announcement from "@/components/Announcement";
+import Orders from "@/pages/Orders";
+import PaymentSuccess from "@/pages/PaymentSuccess";
 
-function App() {
+export default function App() {
 
   const { isAuth, loading, isAdminAuth } = useAppContext();
 
@@ -36,8 +41,9 @@ function App() {
 
   return (
     <>
+      <Announcement />
       <Navbar />
-      <div className="max-w-400 mx-auto px-8 mt-8">
+      <div className="max-w-400 mx-auto px-6 md:px-8 mt-8">
         <Routes>
           {/* public routes */}
           <Route path="/" element={<Home />} />
@@ -45,7 +51,7 @@ function App() {
           <Route path="/categories" element={<AllCategories />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/:id" element={<RedirectLink />} />
 
@@ -54,6 +60,9 @@ function App() {
           <Route path="/signup" element={!isAuth ? <Signup /> : <Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={isAuth ? <Dashboard /> : <Navigate to="/signin" />} />
           <Route path="/settings" element={isAuth ? <Settings /> : <Navigate to="/signin" />} />
+          <Route path="/cart" element={isAuth ? <Cart /> : <Navigate to="/signin" />} />
+          <Route path="/orders" element={isAuth ? <Orders /> : <Navigate to="/signin" />} />
+          <Route path="/payment-success" element={isAuth ? <PaymentSuccess /> : <Navigate to="/signin" />} />
 
           {/* admin protected routes */}
           <Route path="/admin/signin" element={isAdminAuth ? <Navigate to="/admin" /> : <AdminSignin />} />
@@ -63,6 +72,7 @@ function App() {
           <Route path="/admin/product/edit/:id" element={isAdminAuth ? <EditProduct /> : <Navigate to="/admin/signin" />} />
           <Route path="/admin/orders" element={isAdminAuth ? <ManageOrders /> : <Navigate to="/admin/signin" />} />
           <Route path="/admin/users" element={isAdminAuth ? <ManageUsers /> : <Navigate to="/admin/signin" />} />
+          <Route path="/admin/cart" element={isAdminAuth ? <AdminCart /> : <Navigate to="/admin/signin" />} />
         </Routes>
       <Footer />
       </div>

@@ -9,14 +9,17 @@ import cartRoutes from "./routes/cart.route.js"
 import connectDB from "./config/db.js"
 import orderRoutes from "./routes/order.route.js"
 import paymentRoutes from "./routes/payment.route.js"
-import webhookRoutes from "./routes/webhook.route.js"
+import stripeWebhookRouter from "./routes/stripe.webhook.route.js"
+import configRoutes from "./routes/config.route.js"
 
 // config
 connectDB()
+
+// initialize
 const app = express()
 
 // middleware
-app.use("/api/v1/webhook", webhookRoutes) // Stripe Webhook must be defined before express.json() to receive raw body
+app.use("/api/v1/webhook", stripeWebhookRouter) // Stripe Webhook must be defined before express.json() to receive raw body
 app.use(express.json())
 app.use(cookieParser())
 app.use(cors({
@@ -34,6 +37,7 @@ app.use("/api/v1/products", productRoutes)
 app.use("/api/v1/cart", cartRoutes)
 app.use("/api/v1/orders", orderRoutes)
 app.use("/api/v1/payment", paymentRoutes)
+app.use("/api/v1/config", configRoutes)
 
 // server start
 app.listen(process.env.PORT, () => {

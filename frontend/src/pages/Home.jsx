@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import { FaArrowRight } from "react-icons/fa6";
 
 export default function Home() {
+
   const { allProduct } = useAppContext();
 
   return (
@@ -14,14 +15,14 @@ export default function Home() {
 
       {/* best selling */}
       <div className="flex justify-between w-full mt-18 items-center mb-6">
-        <p className="text-4xl font-medium">Best Selling</p>
+        <p className="text-2xl md:text-4xl font-medium">Best Selling</p>
         <Link to="/products">
           <Button variant="outline" size="lg">
             View all <FaArrowRight />
           </Button>
         </Link>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
         {allProduct && [...allProduct].sort((a, b) => b.sold - a.sold).slice(0, 4).map((product) => (
           <ProductCard key={product._id} product={product} />
         ))}
@@ -29,14 +30,14 @@ export default function Home() {
 
       {/* newest arrivals */}
       <div className="flex justify-between w-full mt-18 items-center mb-6">
-        <p className="text-4xl font-medium">Newest Arrivals</p>
+        <p className="text-2xl md:text-4xl font-medium">Newest Arrivals</p>
         <Link to="/products">
           <Button variant="outline" size="lg">
             View all <FaArrowRight />
           </Button>
         </Link>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
         {allProduct && [...allProduct].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 4).map((product) => (
           <ProductCard key={product._id} product={product} />
         ))}

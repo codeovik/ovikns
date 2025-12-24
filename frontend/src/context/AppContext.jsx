@@ -14,19 +14,29 @@ export const AppProvider = ({ children }) => {
   // admin auth variables
   const [isAdminAuth, setIsAdminAuth] = useState(false);
 
-  // products
+  // products variables
   const [allUser, setAllUser] = useState(null);
   const [allProduct, setAllProduct] = useState(null);
+
+  // cart variables
+  const [cart, setCart] = useState(null);
+  const [cartSummary, setCartSummary] = useState({ totalItems: 0, totalPrice: 0 });
+  const [myOrders, setMyOrders] = useState([]);
+  const [allCarts, setAllCarts] = useState(null);
+  const [adminOrders, setAdminOrders] = useState([]);
+
+  // config variables
+  const [config, setConfig] = useState({freeShippingThreshold: 0, shippingFee: 0});
 
   // common varriables
   const navigate = useNavigate();
 
 
-  // axoios instance
+  // axoios instance for API call
   const API = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_DOMAIN,
     withCredentials: true,
-  });
+  })
 
 
   /*-------------------------------------------------------------------------
@@ -78,17 +88,29 @@ export const AppProvider = ({ children }) => {
   };
   // check auth when page loads
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuths = async () => {
       try {
-        await API.get("/api/v1/auth/profile");
-        setIsAuth(true);
-      } catch (error) {
-        setIsAuth(false);
+        const [userRes, adminRes] = await Promise.allSettled([
+          API.get("/api/v1/auth/profile"),
+          API.get("/api/v1/admin/profile")
+        ]);
+
+        if (userRes.status === "fulfilled") {
+          setIsAuth(true);
+        } else {
+          setIsAuth(false);
+        }
+
+        if (adminRes.status === "fulfilled") {
+          setIsAdminAuth(true);
+        } else {
+          setIsAdminAuth(false);
+        }
       } finally {
         setLoading(false);
       }
     };
-    checkAuth();
+    checkAuths();
   }, []);
   // get user data when `isAuth` changes
   useEffect(() => {
@@ -132,20 +154,6 @@ export const AppProvider = ({ children }) => {
       toast.error(error.response.data.message);
     }
   };
-  // check admin auth when page loads
-  useEffect(() => {
-    const checkAdminAuth = async () => {
-      try {
-        await API.get("/api/v1/admin/profile");
-        setIsAdminAuth(true);
-      } catch (error) {
-        setIsAdminAuth(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkAdminAuth();
-  }, []);
 
   /*-------------------------------------------------------------------------
   --------------- products ------------------------------------------------
@@ -204,10 +212,199 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  /*-------------------------------------------------------------------------
+  --------------- cart ------------------------------------------------
+  -------------------------------------------------------------------------*/
+  // get cart summary
+  const fetchCartSummary = async () => {
+    if (isAuth) {
+      try {
+        const res = await API.get("/api/v1/cart/summary");
+        setCartSummary(res.data.summary);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+  // get cart
+  const fetchCart = async () => {
+    if (isAuth) {
+      try {
+        const res = await API.get("/api/v1/cart");
+        setCart(res.data.cart);
+        await fetchCartSummary();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+  // add to cart
+  const addToCart = async (productId, quantity, color) => {
+    try {
+      const res = await API.post("/api/v1/cart", { productId, quantity, color });
+      setCart(res.data.cart);
+      await fetchCartSummary();
+      toast.success("Added to cart", {
+        action: {
+          label: "View Cart",
+          onClick: () => navigate("/cart"),
+        },
+      });
+      return { success: true };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add to cart");
+      return { success: false };
+    }
+  };
+  // update cart item
+  const updateCartItem = async (productId, quantity, color) => {
+    try {
+      const res = await API.put("/api/v1/cart", { productId, quantity, color });
+      setCart(res.data.cart);
+      await fetchCartSummary();
+      return { success: true };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update cart");
+      return { success: false };
+    }
+  };
+  // remove cart item
+  const removeCartItem = async (itemId) => {
+    try {
+      const res = await API.delete(`/api/v1/cart/${itemId}`);
+      setCart(res.data.cart);
+      await fetchCartSummary();
+      toast.success("Item removed");
+      return { success: true };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to remove item");
+      return { success: false };
+    }
+  };
+  // clear cart
+  const clearCart = async () => {
+    try {
+      await API.delete("/api/v1/cart/clear");
+      setCart({ items: [] });
+      setCartSummary({ totalItems: 0, totalPrice: 0 });
+      toast.success("Cart cleared");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to clear cart");
+    }
+  };
+  // fetch cart when isAuth changes
+  useEffect(() => {
+    if (isAuth) fetchCart();
+    else {
+      setCart(null);
+      setCartSummary({ totalItems: 0, totalPrice: 0 });
+    }
+  }, [isAuth]);
+
+  /*-------------------------------------------------------------------------
+  --------------- config --------------------------------------------------
+  -------------------------------------------------------------------------*/
+  // fetch config
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await API.get("/api/v1/config");
+        if (res.data.config) setConfig(res.data.config);
+      } catch (error) {
+        // console.log("Using default config or backend not ready");
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  // update config
+  const updateConfig = async (newConfig) => {
+    try {
+      const res = await API.put("/api/v1/config", newConfig);
+      setConfig(res.data.config);
+      toast.success("Configuration updated");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update config");
+    }
+  };
+
+  /*-------------------------------------------------------------------------
+  --------------- orders & payment ----------------------------------------
+  -------------------------------------------------------------------------*/
+  // place order
+  const placeOrder = async (orderData) => {
+    try {
+      const res = await API.post("/api/v1/orders", orderData);
+      return { success: true, orderId: res.data.order._id };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to place order");
+      return { success: false };
+    }
+  };
+
+  // stripe payment
+  const stripePayment = async (orderId) => {
+    try {
+      const res = await API.post("/api/v1/payment/stripe", { orderId });
+      if (res.data.success) {
+        window.location.href = res.data.url;
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Payment failed");
+    }
+  };
+
+  // fetch user orders
+  const fetchMyOrders = async () => {
+    if (isAuth) {
+      try {
+        const res = await API.get("/api/v1/orders");
+        setMyOrders(res.data.orders);
+      } catch (error) {
+        console.error(error);
+        // toast.error("Failed to fetch orders");
+      }
+    }
+  };
+
+  // fetch all carts (admin)
+  const fetchAllCarts = async () => {
+    try {
+      const res = await API.get("/api/v1/cart/all");
+      setAllCarts(res.data.carts);
+    } catch (error) {
+      // toast.error(error.response?.data?.message || "Failed to fetch carts");
+      console.error(error);
+    }
+  };
+
+  // fetch all orders (admin)
+  const fetchAllOrders = async () => {
+    try {
+      const res = await API.get("/api/v1/orders/all");
+      setAdminOrders(res.data.orders);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch orders");
+    }
+  };
+
+  // update order status (admin)
+  const updateOrderStatus = async (orderId, status) => {
+    try {
+      const res = await API.put(`/api/v1/orders/${orderId}/status`, { status });
+      toast.success(res.data.message);
+      setAdminOrders((prev) =>
+        prev.map((order) => (order._id === orderId ? { ...order, orderStatus: status } : order))
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update status");
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
-        isAuth, user, loading, signup, signin, signout, deleteAccount, adminSignin, isAdminAuth, createProduct, allUser, allProduct, deleteProduct, updateProduct
+        isAuth, user, loading, signup, signin, signout, deleteAccount, adminSignin, isAdminAuth, createProduct, allUser, allProduct, deleteProduct, updateProduct, cart, cartSummary, addToCart, updateCartItem, removeCartItem, clearCart, config, updateConfig, placeOrder, stripePayment, myOrders, fetchMyOrders, allCarts, fetchAllCarts, adminOrders, fetchAllOrders, updateOrderStatus, navigate, toast
       }}
     >
       {children}

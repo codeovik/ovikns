@@ -1,82 +1,88 @@
 import Order from "../models/order.model.js"
 import Cart from "../models/cart.model.js"
-import Product from "../models/product.model.js"
 
+// make order
 export const createOrder = async (req, res) => {
   try {
     const userId = req.user._id
-    const { shippingAddress, paymentMethod } = req.body
+    const { shippingAddress } = req.body
 
-    // 1. Get the user's cart
+    // get the user's cart
     const cart = await Cart.findOne({ user: userId }).populate("items.product")
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cart is empty" })
+      return res.status(400).json({ success: false, message: "Cannot place order, your cart is empty." })
     }
 
-    // 2. Calculate total amount and prepare order items
+    // calculate total amount and prepare order items
     let totalAmount = 0
-    const orderItems = []
-
-    for (const item of cart.items) {
+    const orderItems = cart.items.filter((item) => item.product).map((item) => {
       const product = item.product
-      if (!product) continue // Skip if product no longer exists
-
-      // Use finalPrice from product model for security
-      const price = product.finalPrice || product.price
+      const price = product.finalPrice
       totalAmount += price * item.quantity
-
-      orderItems.push({
+      return {
         product: product._id,
         quantity: item.quantity,
         color: item.color,
         price: price,
-      })
-    }
+      }
+    })
 
-    // 3. Create the Order
+    // send to database with payment status and payment methood's default value
     const newOrder = await Order.create({
       user: userId,
       items: orderItems,
       totalAmount,
       shippingAddress,
-      paymentMethod,
-      paymentStatus: paymentMethod === "online" ? "Paid" : "Pending",
     })
 
-    // 4. Clear the Cart
+    // clear the Cart
     cart.items = []
     await cart.save()
 
-    res.status(201).json({ message: "Order placed successfully", order: newOrder })
+    res.status(201).json({ success: true, message: "Order placed successfully", order: newOrder })
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ success: false, message: error.message })
   }
 }
 
+// get all orders for users with latest created first
 export const getOrders = async (req, res) => {
   try {
     const userId = req.user._id
     const orders = await Order.find({ user: userId }).sort({ createdAt: -1 }).populate("items.product")
-    res.status(200).json(orders)
+    res.status(200).json({ success: true, orders })
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ success: false, message: error.message })
   }
 }
 
-export const updateOrderToPaid = async (req, res) => {
+// get all orders for admin
+export const getAllOrders = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-
-    if (order) {
-      order.paymentStatus = "Paid"
-      const updatedOrder = await order.save()
-      res.json(updatedOrder)
-    } else {
-      res.status(404).json({ message: "Order not found" })
-    }
+    const orders = await Order.find().sort({ createdAt: -1 }).populate("user").populate("items.product")
+    res.status(200).json({ success: true, orders })
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+// update order status
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params
+    const { status } = req.body
+
+    const order = await Order.findById(orderId)
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" })
+    }
+
+    order.orderStatus = status
+    await order.save()
+
+    res.status(200).json({ success: true, message: "Order status updated successfully", order })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
   }
 }

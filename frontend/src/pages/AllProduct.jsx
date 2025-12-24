@@ -111,8 +111,8 @@ export default function AllProduct() {
                 <div className="absolute inset-0 dark:bg-black/80 bg-white/70" />
                 
                 <div className="relative z-10 space-y-3 px-4 animate-in fade-in zoom-in duration-700">
-                    <h1 className="text-4xl md:text-6xl font-bold tracking-tight">Curated Collection</h1>
-                    <p className="text-lg md:text-xl max-w-2xl mx-auto font-light">Discover the latest trends and timeless essentials designed for you.</p>
+                    <h1 className="text-3xl sm:text-5xl md:text-6xl font-semibold tracking-tight">Curated Collection</h1>
+                    <p className="text-sm sm:text-lg md:text-xl max-w-2xl mx-auto font-light">Discover the latest trends and timeless essentials designed for you.</p>
                     
                     <nav className="flex items-center justify-center gap-2 text-sm md:text-base font-medium pt-2">
                         <Link to="/" className="font-light opacity-80 hover:opacity-100 transition-all relative after:absolute after:w-full after:h-px after:bg-black dark:after:bg-white w-max after:left-0 after:bottom-0 after:origin-bottom-right after:scale-x-0 after:transition hover:after:origin-bottom-left hover:after:scale-x-100">Home</Link>
@@ -208,7 +208,8 @@ export default function AllProduct() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* all products */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {currentItems.map(product => (
                             <ProductCard key={product._id} product={product} />
                         ))}

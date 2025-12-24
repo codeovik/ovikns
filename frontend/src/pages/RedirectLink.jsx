@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppContext } from "@/context/AppContext";
-import { Button } from "@/components/ui/button";
-import { IoHomeOutline } from "react-icons/io5";
 import { FaCircleNotch } from "react-icons/fa6";
+import NotFound from "@/pages/NotFound";
 
 export default function RedirectLink() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { allProduct } = useAppContext();
-    const [status, setStatus] = useState("loading"); // 'loading' | 'found' | 'not-found'
+    const [isNotFound, setIsNotFound] = useState(false);
 
     useEffect(() => {
         // Wait for products to load from context
@@ -19,7 +18,7 @@ export default function RedirectLink() {
         
         // If id is not a number, it's invalid
         if (isNaN(numericId)) {
-            setStatus("not-found");
+            setIsNotFound(true);
             return;
         }
 
@@ -27,29 +26,15 @@ export default function RedirectLink() {
         const product = allProduct.find(p => p.id === numericId);
 
         if (product) {
-            setStatus("found");
             // Redirect to the real product details page
-            navigate(`/product/${product._id}`, { replace: true });
+            navigate(`/products/${product._id}`, { replace: true });
         } else {
-            setStatus("not-found");
+            setIsNotFound(true);
         }
     }, [id, allProduct, navigate]);
 
-    if (status === "not-found") {
-        return (
-            <div className="min-h-[calc(100vh-72px)] flex flex-col gap-6 items-center justify-center text-center p-6">
-                <div className="space-y-2">
-                    <h1 className="text-8xl font-bold text-gray-200 dark:text-gray-800">404</h1>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Quick Link Not Found</h2>
-                    <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                        We couldn't find a product associated with the quick link <span className="font-mono font-bold text-primary">#{id}</span>.
-                    </p>
-                </div>
-                <Button onClick={() => navigate('/')} size="lg" className="gap-2">
-                    <IoHomeOutline /> Go to Homepage
-                </Button>
-            </div>
-        );
+    if (isNotFound) {
+        return <NotFound />;
     }
 
     return (

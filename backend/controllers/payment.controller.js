@@ -1,110 +1,96 @@
 import Stripe from "stripe"
-import Cart from "../models/cart.model.js"
 import Order from "../models/order.model.js"
+import Config from "../models/config.model.js"
 
-// Initialize Stripe with your secret key
+// Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
-export const createPaymentIntent = async (req, res) => {
+// make stripe payment
+export const stripePayment = async (req, res) => {
   try {
-    const userId = req.user._id
-    const cart = await Cart.findOne({ user: userId }).populate("items.product")
+    const { orderId } = req.body
+    const order = await Order.findById(orderId).populate("items.product")
 
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: "Cannot process payment, your cart is empty." })
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" })
     }
+
+    // Fetch configuration for shipping threshold
+    let config = await Config.findOne()
+    const freeShippingThreshold = config ? config.freeShippingThreshold : 400
+    const standardShippingFee = config ? config.shippingFee : 50
+    const shippingFee = order.totalAmount > freeShippingThreshold ? 0 : standardShippingFee
+
+    // Update payment method to online
+    order.paymentMethod = "online"
+    await order.save()
 
     // 1. Prepare line items for Stripe Checkout
     const line_items = []
-    for (const item of cart.items) {
-      if (item.product) { // Ensure product exists
-        const price = item.product.finalPrice || item.product.price
+    for (const item of order.items) {
+      // item.product is populated
+      if (item.product) {
         line_items.push({
           price_data: {
-            currency: "usd",
+            currency: "usd", // product currency
             product_data: {
-              name: item.product.title,
-              images: item.product.images, // Optional: Show product image on checkout
+              name: item.product.title, // see title on stripe payment page
+              images: item.product.images, // send our product image to stripe cdn to see in stripe payment page
             },
-            unit_amount: Math.round(price * 100),
+            unit_amount: Math.round(item.price * 100), // main amount
           },
           quantity: item.quantity,
         })
       }
     }
 
-    // 2. Create a Checkout Session
+    // Add Shipping Fee to line items if applicable
+    if (shippingFee > 0) {
+      line_items.push({
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Shipping Fee",
+          },
+          unit_amount: shippingFee * 100,
+        },
+        quantity: 1,
+      })
+    }
+
+    // checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items,
       mode: "payment",
-      success_url: `${process.env.FRONT_END_DOMAIN}/success`, // Redirect here after payment
-      cancel_url: `${process.env.FRONT_END_DOMAIN}/cart`,     // Redirect here if canceled
+      success_url: `${process.env.FRONT_END_DOMAIN}/payment-success?next=/orders&time=10`, // Redirect here after payment
+      cancel_url: `${process.env.FRONT_END_DOMAIN}/orders`,   // Redirect to orders if canceled
       customer_email: req.user.email, // Optional: Pre-fill user email
-      metadata: { userId: userId.toString() }, // Pass User ID to identify who paid
-      shipping_address_collection: { allowed_countries: ["BD", "US", "CA", "GB"] }, // Collect shipping address
+      metadata: { orderId: order._id.toString() }, // Pass Order ID to identify which order to update
     })
 
     // 3. Send the session URL back to the frontend
-    res.json({ url: session.url })
+    res.json({ success: true, url: session.url })
   } catch (error) {
-    console.error("Stripe Error:", error)
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ success: false, message: error.message })
   }
 }
 
-// Handle Stripe Webhook
-export const stripeWebhook = async (req, res) => {
-  const sig = req.headers["stripe-signature"]
-  let event
-
+// make cod payment
+export const codPayment = async (req, res) => {
   try {
-    // Verify the webhook signature
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET)
-  } catch (err) {
-    console.error(`Webhook Error: ${err.message}`)
-    return res.status(400).send(`Webhook Error: ${err.message}`)
-  }
+    const { orderId } = req.body
+    const order = await Order.findById(orderId)
 
-  // Handle the event
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object
-    const userId = session.metadata.userId
-
-    try {
-      // 1. Find the user's cart
-      const cart = await Cart.findOne({ user: userId }).populate("items.product")
-      if (cart) {
-        // 2. Prepare order items
-        const orderItems = cart.items.map((item) => ({
-          product: item.product._id,
-          quantity: item.quantity,
-          color: item.color,
-          price: item.product.finalPrice || item.product.price,
-        }))
-
-        // 3. Create the Order
-        await Order.create({
-          user: userId,
-          items: orderItems,
-          totalAmount: session.amount_total / 100, // Convert cents to dollars
-          shippingAddress: session.shipping_details.address, // Use address from Stripe
-          paymentMethod: "online",
-          paymentStatus: "Paid", // Set status to Paid
-        })
-
-        // 4. Clear the Cart
-        cart.items = []
-        await cart.save()
-        console.log(`Order created for user ${userId}`)
-      }
-    } catch (error) {
-      console.error("Error creating order from webhook:", error)
-      // Note: We don't return 500 here to Stripe to avoid retries if it's a logic error,
-      // but you might want to log this securely.
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" })
     }
-  }
 
-  // Return a 200 response to acknowledge receipt of the event
-  res.send()
+    order.paymentMethod = "COD"
+    await order.save()
+
+    res.status(200).json({ success: true, message: "Order confirmed with Cash on Delivery" })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
 }

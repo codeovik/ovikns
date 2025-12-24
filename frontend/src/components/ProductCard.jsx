@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const ProductCard = ({ product }) => {
     return (
-        <Link to={`/product/${product._id}`} className="group block h-full">
+        <Link to={`/products/${product._id}`} className="group block h-full">
             <div className="bg-box rounded-xl overflow-hidden border-2 border-box-secondary h-full flex flex-col">
                 <div className="relative aspect-square overflow-hidden bg-box group">
                     <img src={product.images[0]} alt={product.title} className="absolute top-0 left-0 w-full h-full transition-transform duration-300" />
@@ -15,18 +15,24 @@ const ProductCard = ({ product }) => {
                 </div>
                 <div className="p-4 flex flex-col grow">
                     <div className="flex justify-between">
+                        {/* category */}
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{product.category}</p>
-                        { product.inStock ? <span className="text-green-500">Abailable</span> : <span className="text-red-500">Not Abailable</span> }
+                        {/* in stock */}
+                        {product.inStock ? <span className="text-green-500">Abailable</span> : <span className="text-red-500">Not Abailable</span>}
                     </div>
-                    <h3 className="font-semibold text-2xl text-gray-900 dark:text-white truncate mb-2" title={product.title}>{product.title}</h3>
+                    {/* title */}
+                    <h3 className="font-semibold text-xl md:text-2xl text-gray-900 dark:text-white truncate mb-0.5 md:mb-2" title={product.title}>{product.title}</h3>
                     <div className="flex items-center justify-between w-full">
-                        <p className="mt-auto flex items-center gap-2">
-                            <span className="font-extrabold text-xl">${product.finalPrice ? product.finalPrice.toFixed(2) : product.price}</span>
+                        <p className="mt-auto flex items-center gap-2 md:text-xl">
+                            {/* final price */}
+                            <span className="font-extrabold">${product.finalPrice ? product.finalPrice.toFixed(2) : product.price}</span>
+                            {/* base price */}
                             {product.discount > 0 && (
-                                <span className="text-xl text-gray-400 line-through">${product.price}</span>
+                                <span className="text-gray-400 line-through">${product.price}</span>
                             )}
                         </p>
-                        <p className="text-2xl">{product.sold} <span className="text-gray-400">sold</span></p>
+                        {/* sold */}
+                        <p className="md:text-2xl font-bold">{product.sold} <span className="font-normal">sold</span></p>
                     </div>
                 </div>
             </div>

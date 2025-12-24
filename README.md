@@ -60,15 +60,25 @@ ADMIN_JWT_SECRET=secret
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+
+# stripe
+STRIPE_API_KEY=
+STRIPE_SECRET_KEY=
 ```
 
-Make sure to add on google cloud for google auth:
-Authorized JavaScript origins:
+Make sure to add on these on 3rd party APIs
+
+Google authorized JavaScript origins:
 ```
 http://localhost:5173
 ```
 
-Authorized redirect URIs:
+Google authorized redirect URIs:
 ```
 http://localhost:3000/api/v1/auth/google/callback
+```
+
+Stripe webhook URL (only hosted domain)
+```
+https://ovikns-backend.vercel.app/api/v1/webhook
 ```

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
-import { FaMinus, FaPlus, FaCartShopping, FaCheck } from "react-icons/fa6";
+import { FaMinus, FaPlus, FaCartShopping, FaCheck, FaCircleNotch } from "react-icons/fa6";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
 import { Link } from 'react-router-dom';
@@ -11,11 +11,12 @@ import { IoIosArrowForward } from "react-icons/io";
 
 export default function ProductDetails() {
     const { id } = useParams();
-    const { allProduct } = useAppContext();
+    const { allProduct, addToCart, isAuth, config } = useAppContext();
     const [product, setProduct] = useState(null);
     const [mainImage, setMainImage] = useState("");
     const [selectedColor, setSelectedColor] = useState("");
     const [quantity, setQuantity] = useState(1);
+    const [isAdding, setIsAdding] = useState(false);
 
     useEffect(() => {
         if (allProduct) {
@@ -38,10 +39,22 @@ export default function ProductDetails() {
     const discountPercent = product.discount ||
         (product.price && product.finalPrice ? Math.round(((product.price - product.finalPrice) / product.price) * 100) : 0);
 
-    const handleAddToCart = () => {
-        if (!product.inStock) return;
-        toast.success(`Added ${quantity} ${product.title} (${selectedColor}) to cart`);
-        // Add your actual cart logic here
+    const handleAddToCart = async () => {
+        if (!product.inStock || isAdding) return;
+
+        if (!isAuth) {
+            toast.error("Please sign in to add items to your cart.");
+            return;
+        }
+
+        if (product.color && product.color.length > 0 && !selectedColor) {
+            toast.error("Please select a color.");
+            return;
+        }
+
+        setIsAdding(true);
+        await addToCart(product._id, quantity, selectedColor);
+        setIsAdding(false);
     };
 
     // Filter related products by category, excluding current product
@@ -195,10 +208,19 @@ export default function ProductDetails() {
                                 size="lg"
                                 className="flex-1 h-auto py-3 text-lg gap-2 shadow-lg shadow-primary/20"
                                 onClick={handleAddToCart}
-                                disabled={!product.inStock}
+                                disabled={!product.inStock || isAdding}
                             >
-                                <FaCartShopping />
-                                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                                {isAdding ? (
+                                    <>
+                                        <FaCircleNotch className="animate-spin" />
+                                        <span>Adding...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaCartShopping />
+                                        <span>{product.inStock ? 'Add to Cart' : 'Out of Stock'}</span>
+                                    </>
+                                )}
                             </Button>
                             {/* share product */}
                             <Button
@@ -231,7 +253,7 @@ export default function ProductDetails() {
                         <div className="mt-6 space-y-2">
                             <div className="flex items-center gap-2">
                                 <FaCheck className="text-green-500 text-sm" />
-                                <p>Free shipping on orders over $400</p>
+                                <p>Free shipping on orders over ${config?.freeShippingThreshold || 400}</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <FaCheck className="text-green-500 text-sm" />
