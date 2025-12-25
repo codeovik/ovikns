@@ -21,18 +21,18 @@ const ProductCard = ({ product }) => {
                         {product.inStock ? <span className="text-green-500">Abailable</span> : <span className="text-red-500">Not Abailable</span>}
                     </div>
                     {/* title */}
-                    <h3 className="font-semibold text-xl md:text-2xl text-gray-900 dark:text-white truncate mb-0.5 md:mb-2" title={product.title}>{product.title}</h3>
+                    <h3 className="font-semibold text-xl md:text-[22px] truncate mb-0.5 md:mb-2" title={product.title}>{product.title}</h3>
                     <div className="flex items-center justify-between w-full">
                         <p className="mt-auto flex items-center gap-2 md:text-xl">
                             {/* final price */}
-                            <span className="font-extrabold">${product.finalPrice ? product.finalPrice.toFixed(2) : product.price}</span>
+                            <span className="font-bold text-primary">${product.finalPrice ? product.finalPrice.toFixed(2) : product.price}</span>
                             {/* base price */}
                             {product.discount > 0 && (
-                                <span className="text-gray-400 line-through">${product.price}</span>
+                                <span className="opacity-75 line-through">${product.price}</span>
                             )}
                         </p>
                         {/* sold */}
-                        <p className="md:text-2xl font-bold">{product.sold} <span className="font-normal">sold</span></p>
+                        <p className="md:text-xl font-medium">{product.sold} <span className="font-normal">sold</span></p>
                     </div>
                 </div>
             </div>

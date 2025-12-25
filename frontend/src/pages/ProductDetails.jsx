@@ -8,10 +8,11 @@ import ProductCard from "@/components/ProductCard";
 import { Link } from 'react-router-dom';
 import { IoShareSocialOutline } from "react-icons/io5";
 import { IoIosArrowForward } from "react-icons/io";
+import Loading from '@/components/Loading';
 
 export default function ProductDetails() {
     const { id } = useParams();
-    const { allProduct, addToCart, isAuth, config } = useAppContext();
+    const { allProduct, addToCart, isAuth, config, navigate } = useAppContext();
     const [product, setProduct] = useState(null);
     const [mainImage, setMainImage] = useState("");
     const [selectedColor, setSelectedColor] = useState("");
@@ -32,7 +33,7 @@ export default function ProductDetails() {
     }, [id, allProduct]);
 
     if (!product) {
-        return <div className="min-h-[60vh] flex items-center justify-center text-lg">Loading product details...</div>;
+        return <Loading />
     }
 
     // Calculate discount percentage if not explicitly provided
@@ -44,6 +45,7 @@ export default function ProductDetails() {
 
         if (!isAuth) {
             toast.error("Please sign in to add items to your cart.");
+            navigate("/signin");
             return;
         }
 
@@ -69,7 +71,7 @@ export default function ProductDetails() {
                 <div className="flex flex-col gap-4">
                     {/* breadcamp */}
                     <nav className="flex" aria-label="Breadcrumb">
-                        <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+                        <ol className="inline-flex items-center space-x-1 md:space-x-2 text-sm">
                             <li className="inline-flex items-center">
                                 <Link to="/" className="inline-flex items-center font-light opacity-80 hover:opacity-100 transition-all relative after:absolute after:w-full after:h-px after:bg-black dark:after:bg-white w-max after:left-0 after:bottom-0 after:origin-bottom-right after:scale-x-0 after:transition hover:after:origin-bottom-left hover:after:scale-x-100">
                                     Home
@@ -131,12 +133,12 @@ export default function ProductDetails() {
                 <div className="flex flex-col lg:sticky lg:top-24 h-fit min-w-0">
                     <div>
                         {/* title */}
-                        <h1 className="text-3xl md:text-[42px] font-medium text-gray-900 dark:text-white leading-tight">
+                        <h1 className="text-3xl md:text-4xl text-gray-900 dark:text-white leading-tight">
                             {product.title}
                         </h1>
                         {/* price */}
-                        <div className="flex items-center gap-4 mt-1">
-                            <p className="text-[42px] font-medium">
+                        <div className="flex items-center gap-4 mt-6">
+                            <p className="text-4xl font-medium">
                                 ${(product.finalPrice).toFixed(2)}
                             </p>
                             <p className="text-2xl text-gray-400 line-through">
@@ -151,7 +153,7 @@ export default function ProductDetails() {
                     </div>
 
                     {/* Description (Quill HTML) */}
-                    <div className="pb-6 mb-6 border-b">
+                    <div className="pb-6 mt-4 mb-6 border-b">
                         <h3 className="text-2xl font-medium">Description:</h3>
                         <div className='opacity-80' dangerouslySetInnerHTML={{ __html: product.description || "<p>No description available.</p>" }} />
                     </div>
@@ -206,7 +208,7 @@ export default function ProductDetails() {
 
                             <Button
                                 size="lg"
-                                className="flex-1 h-auto py-3 text-lg gap-2 shadow-lg shadow-primary/20"
+                                className="flex-1 h-auto py-3 text-lg gap-2"
                                 onClick={handleAddToCart}
                                 disabled={!product.inStock || isAdding}
                             >

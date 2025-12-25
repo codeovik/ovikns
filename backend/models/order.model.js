@@ -15,12 +15,16 @@ const orderSchema = new mongoose.Schema({
     }
   ],
   totalAmount: { type: Number, required: true },
+  shippingFee: { type: Number, required: true, default: 0 },
   shippingAddress: {
-    street: String,
-    city: String,
-    state: String,
-    zip: String,
-    country: String
+    street: { type: String, required: true, maxLength: 200 },
+    city: { type: String, required: true, maxLength: 100 },
+    state: { type: String, required: true, maxLength: 100 },
+    zip: { type: String, required: true, maxLength: 20 },
+    country: { type: String, required: true, maxLength: 100 },
+    phone: { type: String, required: true, maxLength: 20 },
+    deliveryInstructions: { type: String, maxLength: 1000 },
+    appartment: { type: String, required: true, maxLength: 50 },
   },
   paymentMethod: {
     type: String,

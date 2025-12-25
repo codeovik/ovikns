@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppContext } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { FaMinus, FaPlus, FaTrash, FaArrowRight, FaCircleNotch } from "react-icons/fa6";
+import { FaMinus, FaPlus, FaTrash, FaArrowRight } from "react-icons/fa6";
 import { IoBagHandleOutline } from "react-icons/io5";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 import { IoBagCheckOutline } from "react-icons/io5";
 
 export default function Cart() {
-  const { cart, cartSummary, updateCartItem, removeCartItem, clearCart, config, placeOrder, stripePayment, isAuth } = useAppContext();
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { cart, cartSummary, updateCartItem, removeCartItem, clearCart, config, isAuth } = useAppContext();
   const navigate = useNavigate();
 
   const subtotal = cartSummary?.totalPrice || 0;
@@ -17,27 +16,12 @@ export default function Cart() {
   const shipping = subtotal > (config?.freeShippingThreshold || 400) ? 0 : config.shippingFee;
   const total = subtotal + shipping;
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (!isAuth) {
       navigate("/signin");
       return;
     }
-
-    setIsCheckingOut(true);
-
-    // Note: In a real app, you would navigate to a checkout page to collect the address.
-    // We are using a default address here to demonstrate the payment flow immediately.
-    const orderData = {
-      shippingAddress: { street: "123 Main St", city: "New York", state: "NY", zip: "10001", country: "USA" }
-    };
-
-    const { success, orderId } = await placeOrder(orderData);
-    
-    if (success) {
-      await stripePayment(orderId);
-    }
-    
-    setIsCheckingOut(false);
+    navigate("/shipping");
   };
 
   if (!cart || cart.items.length === 0) {
@@ -81,7 +65,7 @@ export default function Cart() {
               <div className="flex-1 flex flex-col justify-between">
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <Link to={`/product/${item.product?._id}`} className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors line-clamp-1">
+                    <Link to={`/products/${item.product?._id}`} className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary transition-colors line-clamp-1">
                       {item.product?.title}
                     </Link>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -117,7 +101,10 @@ export default function Cart() {
           ))}
 
           {/* clear cart */}
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button to="/products" variant="outline">
+              <FaPlus className="text-xs" /> More Products
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive">
@@ -154,17 +141,16 @@ export default function Cart() {
                 <span className="font-medium">{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
               </div>
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-between text-lg font-bold">
-                <span>Total</span>
+                <span>Estimated Total</span>
                 <span className="text-primary">${total.toFixed(2)}</span>
               </div>
             </div>
             <Button 
-              onClick={handleCheckout} 
-              disabled={isCheckingOut}
-              className="w-full py-6 text-lg shadow-lg shadow-primary/20"
+              onClick={handleCheckout}
+              className="w-full py-6 text-lg"
             >
-              {isCheckingOut ? <FaCircleNotch className="animate-spin" /> : <IoBagCheckOutline />} 
-              {isCheckingOut ? "Processing..." : "Proceed to Checkout"}
+              <IoBagCheckOutline /> 
+              Proceed to Checkout
             </Button>
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">Secure Checkout - SSL Encrypted</p>

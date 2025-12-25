@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js"
 import Cart from "../models/cart.model.js"
+import Config from "../models/config.model.js"
 
 // make order
 export const createOrder = async (req, res) => {
@@ -27,11 +28,20 @@ export const createOrder = async (req, res) => {
       }
     })
 
+    // Get shipping configuration
+    const config = await Config.findOne()
+    const shippingFeeConfig = config?.shippingFee || 50
+    const freeShippingThreshold = config?.freeShippingThreshold || 400
+
+    const shippingFee = totalAmount > freeShippingThreshold ? 0 : shippingFeeConfig
+    totalAmount += shippingFee
+
     // send to database with payment status and payment methood's default value
     const newOrder = await Order.create({
       user: userId,
       items: orderItems,
       totalAmount,
+      shippingFee,
       shippingAddress,
     })
 

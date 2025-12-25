@@ -46,7 +46,7 @@ export default function Hero() {
                                 <p className="text-base md:text-3xl text-center font-light mb-3 mt-3">{item.description}</p>
                                 <h3 className="text-[40px]/11 lg:text-5xl xl:text-7xl text-center">{item.title}</h3>
                                 <div className="md:mt-10 mt-5 mb-5 text-center">
-                                    <Button variant="outline" size='lg'>
+                                    <Button variant="secondary" size='lg'>
                                         <FaShoppingBag /> Shop Now
                                     </Button>
                                 </div>

@@ -27,7 +27,7 @@ export default function Navbar() {
             <img src="https://ovikbiswas.wordpress.com/wp-content/uploads/2025/12/logo-dark-2.png" alt="logo for dark mode" className="hidden dark:block h-10 w-auto" />
           </Link>
           {/* nav links */}
-          <ul className="hidden md:flex space-x-4">
+          <ul className="hidden lg:flex space-x-4">
             {navLinks.map((link) => (
               <li key={link} >
                 <NavLink
@@ -80,32 +80,59 @@ export default function Navbar() {
                 </Link>
               </>
             )}
-            <div className="hidden md:visible">
+            <div className="hidden lg:block">
               <ThemeToggle />
             </div>
-            <button className="md:hidden text-2xl" onClick={() => setIsOpen(!isOpen)}>
+            <button className="lg:hidden text-2xl" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? <FaTimes /> : <FaBars />}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-box border-t shadow-lg flex flex-col items-center py-4 gap-4">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link}
-                to={link === "Home" ? "/" : `/${link.toLowerCase()}`}
-                onClick={() => setIsOpen(false)}
-                className={({ isActive }) =>
-                  `hover:text-primary transition-all ${isActive ? "text-primary font-medium" : ""}`
-                }
-              >
-                {link}
-              </NavLink>
-            ))}
+        <div className={`lg:hidden absolute top-full left-0 w-full bg-box/95 backdrop-blur-md border-t border-box-secondary shadow-2xl flex flex-col overflow-hidden transition-all duration-500 ease-in-out origin-top ${isOpen ? "h-[calc(100vh-72px)] opacity-100 translate-y-0" : "h-0 opacity-0 -translate-y-4 pointer-events-none"}`}>
+          <div className="flex flex-col items-center py-8 gap-6">
+            {/* User Info */}
+            {isAuth && (
+              <div className="text-center space-y-1 animate-in fade-in slide-in-from-top-4 duration-700">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back,</p>
+                <p className="text-xl font-semibold text-primary">{user?.name}</p>
+              </div>
+            )}
+
+            {/* Navigation Links */}
+            <div className="flex flex-col items-center gap-2 w-full">
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link}
+                  to={link === "Home" ? "/" : `/${link.toLowerCase()}`}
+                  onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    `text-lg font-medium w-full text-center py-3 hover:bg-box-secondary transition-colors relative ${isActive ? "text-primary bg-primary/5" : "text-gray-700 dark:text-gray-200"}`
+                  }
+                >
+                  {link}
+                </NavLink>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col items-center gap-4 mt-2 w-full px-8">
+              <div className="flex items-center justify-between w-full max-w-xs bg-box-secondary/50 p-3 rounded-xl border border-box-secondary">
+                <span className="text-sm font-medium ml-2">Appearance</span>
+                <ThemeToggle />
+              </div>
+
+              {!isAuth && (
+                <Link to="/signin" onClick={() => setIsOpen(false)} className="w-full max-w-xs">
+                  <Button className="w-full" size="lg">
+                    <RiAccountCircle2Line className="mr-2" /> Sign In
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </nav>
     </>
   );

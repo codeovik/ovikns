@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useAppContext } from "@/context/AppContext";
 import { Link } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
+import Loading from '@/components/Loading';
 
 export default function AllCategories() {
     const { allProduct } = useAppContext();
@@ -35,11 +36,7 @@ export default function AllCategories() {
     }, [allProduct]);
 
     if (!allProduct) {
-        return (
-            <div className="min-h-[calc(100vh-72px)] flex items-center justify-center">
-                <div className="animate-pulse text-xl font-medium">Loading Categories...</div>
-            </div>
-        );
+        return <Loading />
     }
 
     return (

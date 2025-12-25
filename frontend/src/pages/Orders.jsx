@@ -35,27 +35,27 @@ export default function Orders() {
 
     return (
         <>
-            <h1 className="text-3xl font-bold mb-8">My Orders</h1>
+            <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">My Orders</h1>
             <div className="space-y-6">
                 {myOrders.map(order => (
-                    <div key={order._id} className="bg-box border border-box-secondary rounded-xl p-6 shadow-sm">
+                    <div key={order._id} className="bg-box border border-box-secondary rounded-xl p-4 md:p-6 shadow-sm">
                         {/* Header */}
-                        <div className="flex flex-wrap justify-between items-start gap-4 border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
-                            <div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:flex lg:justify-between lg:items-center gap-4 border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                            <div className="col-span-2 sm:col-span-1">
                                 <p className="text-sm text-gray-500">Order ID</p>
-                                <p className="font-mono font-medium text-sm">{order._id}</p>
+                                <p className="font-mono font-medium text-sm break-all">#{order._id}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Date</p>
-                                <p className="font-medium">{new Date(order.createdAt).toLocaleDateString()} ({new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</p>
+                                <p className="font-medium text-sm md:text-base">{new Date(order.createdAt).toLocaleDateString()} <span className="text-gray-400 text-xs md:text-sm">({new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span></p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Total Amount</p>
-                                <p className="font-bold text-primary">${order.totalAmount?.toFixed(2) || "0.00"}</p>
+                                <p className="font-bold text-primary">${(order.totalAmount + order.shippingFee).toFixed(2)}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Payment methood</p>
-                                <p className="font-bold">{order.paymentMethod}</p>
+                                <p className="text-sm text-gray-500">Payment Method</p>
+                                <p className="font-bold text-sm md:text-base">{order.paymentMethod}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Status</p>
@@ -70,7 +70,7 @@ export default function Orders() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Payment</p>
-                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold capitalize ${order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold capitalize ${order.paymentStatus === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
                                     }`}>
                                     {order.paymentStatus}
                                 </span>
@@ -78,20 +78,22 @@ export default function Orders() {
                         </div>
 
                         {/* Items */}
-                        <div className="space-y-4">
+                        <div className="flex gap-x-12 gap-y-6 flex-wrap">
                             {order.items?.map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-4">
+                                <div key={idx} className="flex items-start sm:items-center gap-4">
                                     <img
                                         src={item.product?.images?.[0] || "https://placehold.co/50"}
                                         alt={item.product?.title || "Product"}
-                                        className="w-16 h-16 object-cover rounded-md bg-gray-100"
+                                        className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md bg-gray-100 shrink-0"
                                     />
-                                    <div className="flex-1">
-                                        <Link to={`/products/${item.product?._id}`} className="hover:text-primary transition-colors">
-                                            <h4 className="font-medium line-clamp-1">{item.product?.title || "Product Unavailable"}</h4>
+                                    <div className="flex-1 min-w-0">
+                                        <Link to={`/products/${item.product?._id}`} className="hover:text-primary transition-colors block">
+                                            <h4 className="font-medium text-sm sm:text-base truncate">{item.product?.title || "Product Unavailable"}</h4>
                                         </Link>
-                                        <p className="text-sm text-gray-500">Qty: {item.quantity} × ${item.price}</p>
-                                        {item.color && <p className="text-xs text-gray-400">Color: {item.color}</p>}
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                                            <p className="text-sm text-gray-500">Qty: {item.quantity} × ${item.price}</p>
+                                            {item.color && <p className="text-sm text-gray-400">Color: <span className="capitalize">{item.color}</span></p>}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -99,12 +101,14 @@ export default function Orders() {
 
                         {/* Actions */}
                         <div className="mt-6 flex justify-end gap-4">
-                            {order.paymentStatus === 'pending' && order.orderStatus !== 'Cancelled' && (
+                            {/* {order.paymentStatus === 'Pending' && (
                                 <Button onClick={() => stripePayment(order._id)} className="gap-2">
                                     <FaCreditCard /> Pay Now
                                 </Button>
-                            )}
-                            {/* Add View Details button if needed, but simple list is fine for now */}
+                            )} */}
+                            <Link to={`/orders/${order._id}`}>
+                                <Button variant="outline">View Details</Button>
+                            </Link>
                         </div>
                     </div>
                 ))}

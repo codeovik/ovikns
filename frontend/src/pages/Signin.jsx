@@ -16,7 +16,7 @@ export default function Signin() {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[calc(100vh-72px)]">
+        <div className="flex justify-center items-center">
             <div className="p-6 bg-box rounded-lg sm:mx-auto sm:w-full sm:max-w-lg">
                 <h2 className="mb-4 text-center text-4xl tracking-tight">Sign in to your account</h2>
                 <div className="mt-3">

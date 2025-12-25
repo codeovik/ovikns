@@ -27,16 +27,14 @@ import Cart from "@/pages/Cart";
 import Announcement from "@/components/Announcement";
 import Orders from "@/pages/Orders";
 import PaymentSuccess from "@/pages/PaymentSuccess";
+import Shipping from "@/pages/Shipping";
+import OrderDetails from "@/pages/OrderDetails";
 
 export default function App() {
 
   const { isAuth, loading, isAdminAuth } = useAppContext();
 
-  if (loading) {
-    return (
-      <Loading />
-    );
-  }
+  if (loading) return <Loading />
 
   return (
     <>
@@ -61,6 +59,8 @@ export default function App() {
           <Route path="/cart" element={isAuth ? <Cart /> : <Navigate to="/signin" />} />
           <Route path="/orders" element={isAuth ? <Orders /> : <Navigate to="/signin" />} />
           <Route path="/payment-success" element={isAuth ? <PaymentSuccess /> : <Navigate to="/signin" />} />
+          <Route path="/shipping" element={isAuth ? <Shipping /> : <Navigate to="/signin" />} />
+          <Route path="/orders/:id" element={isAuth ? <OrderDetails /> : <Navigate to="/signin" />} />
 
           {/* admin protected routes */}
           <Route path="/admin/signin" element={isAdminAuth ? <Navigate to="/admin" /> : <AdminSignin />} />

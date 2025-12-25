@@ -5,7 +5,7 @@ import { useAppContext } from "@/context/AppContext";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { FaChevronDown, FaCheck } from "react-icons/fa6";
+import { FaChevronDown, FaCheck, FaMagnifyingGlass } from "react-icons/fa6";
 import { useSearchParams, Link } from "react-router-dom";
 import { IoIosArrowForward } from "react-icons/io";
 
@@ -14,15 +14,17 @@ export default function AllProduct() {
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 18;
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    // Filter States
-    const [availability, setAvailability] = useState([]);
-    const [priceRange, setPriceRange] = useState([1000]);
-    const [selectedColor, setSelectedColor] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState([]);
-    const [sortOption, setSortOption] = useState("");
+    const itemsPerPage = 30;
+
+    // Filter States - Initialize from URL
+    const [searchQuery, setSearchQuery] = useState(searchParams.get("query") || "");
+    const [availability, setAvailability] = useState(searchParams.get("stock") ? searchParams.get("stock").split(",") : []);
+    const [priceRange, setPriceRange] = useState([searchParams.get("price") ? Number(searchParams.get("price")) : 1000]);
+    const [selectedColor, setSelectedColor] = useState(searchParams.get("color") ? searchParams.get("color").split(",") : []);
+    const [selectedCategory, setSelectedCategory] = useState(searchParams.get("category") ? searchParams.get("category").split(",") : []);
+    const [sortOption, setSortOption] = useState(searchParams.get("sort") || "");
     const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
@@ -32,17 +34,31 @@ export default function AllProduct() {
         }
     }, [allProduct]);
 
-    // Sync URL category param with state
+    // Sync State to URL
     useEffect(() => {
-        const categoryParam = searchParams.get("category");
-        if (categoryParam) {
-            setSelectedCategory([categoryParam]);
-        }
-    }, [searchParams]);
+        const params = {};
+        if (searchQuery) params.query = searchQuery;
+        if (availability.length > 0) params.stock = availability.join(",");
+        if (priceRange[0] < 1000) params.price = priceRange[0];
+        if (selectedColor.length > 0) params.color = selectedColor.join(",");
+        if (selectedCategory.length > 0) params.category = selectedCategory.join(",");
+        if (sortOption) params.sort = sortOption;
+
+        setSearchParams(params, { replace: true });
+    }, [searchQuery, availability, priceRange, selectedColor, selectedCategory, sortOption, setSearchParams]);
 
     useEffect(() => {
         if (!products) return;
         let result = [...products];
+
+        // Apply Search
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(p => 
+                p.title.toLowerCase().includes(query) || 
+                (p.category && p.category.toLowerCase().includes(query))
+            );
+        }
 
         // Apply Filters
         if (availability.length > 0) {
@@ -80,7 +96,7 @@ export default function AllProduct() {
 
         setFilteredProducts(result);
         setCurrentPage(1); // Reset to page 1 on filter change
-    }, [products, availability, priceRange, selectedColor, selectedCategory, sortOption]);
+    }, [products, searchQuery, availability, priceRange, selectedColor, selectedCategory, sortOption]);
 
     // Pagination Logic
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -173,7 +189,18 @@ export default function AllProduct() {
 
                 {/* Product Grid & Pagination */}
                 <div className="min-w-0">
-                    <div className="flex justify-end mb-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                        {/* Search */}
+                        <div className="relative w-full sm:max-w-xs">
+                            <FaMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <input 
+                                type="text" 
+                                placeholder="Search products..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-box-secondary rounded-md focus:outline-none focus:border-primary bg-box border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50"
+                            />
+                        </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="flex items-center gap-2">
